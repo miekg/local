@@ -39,6 +39,7 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 
 	m := new(dns.Msg)
 	m.SetReply(r)
+	zone = qname[len(qname)-len(zone):]
 
 	switch q := state.Name(); q {
 	case "localhost.", "0.in-addr.arpa.", "127.in-addr.arpa.", "255.in-addr.arpa.":
@@ -76,12 +77,12 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 			m.Answer = []dns.RR{&dns.PTR{Hdr: hdr, Ptr: "localhost."}}
 		default:
 			// nodata
-			m.Ns = soaFromOrigin(qname)
+			m.Ns = soaFromOrigin(zone)
 		}
 	}
 
 	if len(m.Answer) == 0 && len(m.Ns) == 0 {
-		m.Ns = soaFromOrigin(qname)
+		m.Ns = soaFromOrigin(zone)
 		m.Rcode = dns.RcodeNameError
 	}
 
