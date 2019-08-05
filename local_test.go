@@ -10,17 +10,32 @@ import (
 	"github.com/miekg/dns"
 )
 
+var testcases = []struct {
+	question string
+	qtype    uint16
+	rcode    int
+}{
+	{"localhost.", dns.TypeA, dns.RcodeSuccess},
+	{"localhost.", dns.TypeMX, dns.RcodeSuccess},
+	{"a.localhost.", dns.TypeA, dns.RcodeNameError},
+	{"1.0.0.127.in-addr.arpa.", dns.TypePTR, dns.RcodeSuccess},
+}
+
 func TestAny(t *testing.T) {
 	req := new(dns.Msg)
-	req.SetQuestion("localhost.", dns.TypeSOA)
 	l := &Local{}
 
-	rec := dnstest.NewRecorder(&test.ResponseWriter{})
-	_, err := a.ServeDNS(context.TODO(), rec, req)
+	for _, tc := range testcases {
+		req.SetQuestion(tc.question, tc.qtype)
+		rec := dnstest.NewRecorder(&test.ResponseWriter{})
+		_, err := l.ServeDNS(context.TODO(), rec, req)
 
-	if err != nil {
-		t.Errorf("Expected no error, but got %q", err)
+		if err != nil {
+			t.Errorf("Expected no error, but got %q", err)
+			continue
+		}
+		if rec.Msg.Rcode != tc.rcode {
+			t.Errorf("Expected rcode %d, got %d", tc.rcode, rec.Msg.Rcode)
+		}
 	}
-
-	println(rec.String())
 }

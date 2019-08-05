@@ -19,7 +19,7 @@ var zones = []string{"localhost.", "0.in-addr.arpa.", "127.in-addr.arpa.", "255.
 
 func soaFromOrigin(origin string) []dns.RR {
 	hdr := dns.RR_Header{Name: origin, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeSOA}
-	return []dns.RR{&dns.SOA{Hdr: hdr, Ns: "localhost.", Mbox: "root.localhost.", Serial: 1, Serial, 1, Refresh: 0, Retry: 0, Expire: 0, Minttl: 0}}
+	return []dns.RR{&dns.SOA{Hdr: hdr, Ns: "localhost.", Mbox: "root.localhost.", Serial: 1, Refresh: 0, Retry: 0, Expire: 0, Minttl: 0}}
 }
 
 func nsFromOrigin(origin string) []dns.RR {
@@ -30,8 +30,9 @@ func nsFromOrigin(origin string) []dns.RR {
 // ServeDNS implements the plugin.Handler interface.
 func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r}
-	qname := state.Qname()
-	zone := plugin.Zones(l.zones).Matches(qname)
+	qname := state.QName()
+
+	zone := plugin.Zones(zones).Matches(qname)
 	if zone == "" {
 		return plugin.NextOrFailure(l.Name(), l.Next, ctx, w, r)
 	}
@@ -41,34 +42,40 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 
 	switch q := state.Name(); q {
 	case "localhost.", "0.in-addr.arpa.", "127.in-addr.arpa.", "255.in-addr.arpa.":
-		switch state.Qtype() {
+		switch state.QType() {
 		case dns.TypeA:
 			if q != "localhost." {
+				// nodata
+				m.Ns = soaFromOrigin(qname)
 				break
 			}
-			// only for localhost. we have some data here.
+
 			hdr := dns.RR_Header{Name: qname, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeA}
-			rr := &dns.RR{Hdr: hdr, A: net.ParseIP("127.0.0.1").To4()}
+			m.Answer = []dns.RR{&dns.A{Hdr: hdr, A: net.ParseIP("127.0.0.1").To4()}}
 		case dns.TypeAAAA:
 			if q != "localhost." {
+				// nodata
+				m.Ns = soaFromOrigin(qname)
 				break
 			}
-			// only for localhost. we have some data here.
+
 			hdr := dns.RR_Header{Name: qname, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeAAAA}
-			rr := &dns.RR{Hdr: hdr, A: net.ParseIP("::1")}
+			m.Answer = []dns.RR{&dns.AAAA{Hdr: hdr, AAAA: net.ParseIP("::1")}}
 		case dns.TypeSOA:
 			m.Answer = soaFromOrigin(qname)
 		case dns.TypeNS:
 			m.Answer = nsFromOrigin(qname)
 		default:
+			// nodata
 			m.Ns = soaFromOrigin(qname)
 		}
 	case "1.0.0.127.in-addr.arpa.":
-		switch state.Qtype() {
+		switch state.QType() {
 		case dns.TypePTR:
 			hdr := dns.RR_Header{Name: qname, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypePTR}
-			rr := &dns.RR{Hdr: hdr, PTR: "localhost."}
+			m.Answer = []dns.RR{&dns.PTR{Hdr: hdr, Ptr: "localhost."}}
 		default:
+			// nodata
 			m.Ns = soaFromOrigin(qname)
 		}
 	}
