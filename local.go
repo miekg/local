@@ -18,12 +18,12 @@ type Local struct {
 var zones = []string{"localhost.", "0.in-addr.arpa.", "127.in-addr.arpa.", "255.in-addr.arpa."}
 
 func soaFromOrigin(origin string) []dns.RR {
-	hdr := dns.RR_Header{Name: origin, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeSOA}
-	return []dns.RR{&dns.SOA{Hdr: hdr, Ns: "localhost.", Mbox: "root.localhost.", Serial: 1, Refresh: 0, Retry: 0, Expire: 0, Minttl: 0}}
+	hdr := dns.RR_Header{Name: origin, Ttl: ttl, Class: dns.ClassINET, Rrtype: dns.TypeSOA}
+	return []dns.RR{&dns.SOA{Hdr: hdr, Ns: "localhost.", Mbox: "root.localhost.", Serial: 1, Refresh: 0, Retry: 0, Expire: 0, Minttl: ttl}}
 }
 
 func nsFromOrigin(origin string) []dns.RR {
-	hdr := dns.RR_Header{Name: origin, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeNS}
+	hdr := dns.RR_Header{Name: origin, Ttl: ttl, Class: dns.ClassINET, Rrtype: dns.TypeNS}
 	return []dns.RR{&dns.NS{Hdr: hdr, Ns: "localhost."}}
 }
 
@@ -51,7 +51,7 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 				break
 			}
 
-			hdr := dns.RR_Header{Name: qname, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeA}
+			hdr := dns.RR_Header{Name: qname, Ttl: ttl, Class: dns.ClassINET, Rrtype: dns.TypeA}
 			m.Answer = []dns.RR{&dns.A{Hdr: hdr, A: net.ParseIP("127.0.0.1").To4()}}
 		case dns.TypeAAAA:
 			if q != "localhost." {
@@ -60,7 +60,7 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 				break
 			}
 
-			hdr := dns.RR_Header{Name: qname, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypeAAAA}
+			hdr := dns.RR_Header{Name: qname, Ttl: ttl, Class: dns.ClassINET, Rrtype: dns.TypeAAAA}
 			m.Answer = []dns.RR{&dns.AAAA{Hdr: hdr, AAAA: net.ParseIP("::1")}}
 		case dns.TypeSOA:
 			m.Answer = soaFromOrigin(qname)
@@ -73,7 +73,7 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 	case "1.0.0.127.in-addr.arpa.":
 		switch state.QType() {
 		case dns.TypePTR:
-			hdr := dns.RR_Header{Name: qname, Ttl: 604800, Class: dns.ClassINET, Rrtype: dns.TypePTR}
+			hdr := dns.RR_Header{Name: qname, Ttl: ttl, Class: dns.ClassINET, Rrtype: dns.TypePTR}
 			m.Answer = []dns.RR{&dns.PTR{Hdr: hdr, Ptr: "localhost."}}
 		default:
 			// nodata
@@ -92,3 +92,5 @@ func (l Local) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 
 // Name implements the plugin.Handler interface.
 func (l Local) Name() string { return "local" }
+
+const ttl = 604800

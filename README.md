@@ -12,7 +12,7 @@ names in the following zones: localhost, 0.in-addr.arpa, 127.in-addr.arpa and 25
 With *local* enabled any query falling under these zones will get a reply. The prevents the query
 from "escaping" to the internet and putting strain on external infrastructure.
 
-Most zones are empty, only `localhost.` address (A and AAAA) records a defined and a
+The zones are mostly empty, only `localhost.` address records (A and AAAA) are defined and a
 `1.0.0.127.in-addr.arpa.` reverse record.
 
 ## Syntax
