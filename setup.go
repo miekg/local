@@ -7,12 +7,7 @@ import (
 	"github.com/caddyserver/caddy"
 )
 
-func init() {
-	caddy.RegisterPlugin("local", caddy.Plugin{
-		ServerType: "dns",
-		Action:     setup,
-	})
-}
+func init() { plugin.Register("local", setup) }
 
 func setup(c *caddy.Controller) error {
 	l := Local{}
