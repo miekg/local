@@ -1,3 +1,6 @@
+THIS IS NOW A DEFAULT PLUGIN IN COREDNS, SEE https://github.com/coredns/coredns/issues/4260
+
+
 # local
 
 ## Name
