@@ -42,7 +42,7 @@ debug log to get the client IP address.
 }
 ~~~
 
-## Also See
+## See Also
 
 BIND9's configuration in Debian comes with these zones preconfigured. See the *debug* plugin for
 enabling debug logging.
